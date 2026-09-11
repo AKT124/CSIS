@@ -5,7 +5,7 @@ from Sourashtra_File import name
 
 sl.title("Hi, Arya")
 sl.write(name+":")
-
+# need to display the login screen first and if they get both right proceed to the logged in screen
 with open("Sourashtra.txt", "w", encoding="utf-8") as file_variable:
     file_variable.write(words)
 
@@ -15,6 +15,10 @@ with open("Sourashtra.txt", "w", encoding="utf-8") as file_variable:
 with open("Sourashtra.txt", "r", encoding="utf-8") as file_variable:
         variable_name = file_variable.read()
 
+#login screen:
+
+
+#logged in screen
 scol1, scol2, scol3 = sl.columns(3)
 
 with scol1:
@@ -33,12 +37,16 @@ with bcol1:
         sl.write("Flashcards link placeholder")
 with bcol2:
     with sl.container(border=True):
-        sl.write("Total % words completed Placeholder")
+        sl.write("Total % words")
 with bcol3:
     with sl.container(border=True):
         sl.write("MCQs link Placeholder")
-sl.text(name)
 
+
+with sl.container(border=True):
+    sl.write("words mastered till next set placeholder")
+
+sl.text(name)
 
 
 
