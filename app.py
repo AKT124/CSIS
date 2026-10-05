@@ -6,7 +6,7 @@ from Sourashtra_File import name
 import os
 
 
-def create_account_file(username, password, language="Sourashtra"):
+def createAccountFile(username, password, language="Sourashtra"):
     file_path = f"{username}.txt"
     lines = [
         username,  # Line 0 (1st row)
@@ -23,7 +23,7 @@ def create_account_file(username, password, language="Sourashtra"):
         file.write("\n".join(lines))
 
 
-def read_account_file(username):
+def readAccountFile(username):
     file_path = f"{username}.txt"
     if not os.path.exists(file_path):
         return None
@@ -44,7 +44,7 @@ def read_account_file(username):
     }
 
 
-def update_account_stats(
+def updateAccountFile(
     username,
     password,
     language,
@@ -93,7 +93,7 @@ if sl.session_state.panel == "login/create":
     user_name = sl.text_input("Enter your name:")
     password = sl.text_input("Enter your password:", type="password")
     if sl.button("Log In"):
-        account_data = read_account_file(user_name)
+        account_data = readAccountFile(user_name)
         if account_data and account_data["password"] == password:
             sl.session_state.current_user = account_data
             sl.session_state.panel = "home"
@@ -118,8 +118,8 @@ elif sl.session_state.panel == "create":
         elif os.path.exists(f"{new_username}.txt"):
             sl.error("Account already exists!")
         else:
-            create_account_file(new_username, new_password)
-            sl.session_state.current_user = read_account_file(new_username)
+            createAccountFile(new_username, new_password)
+            sl.session_state.current_user = readAccountFile(new_username)
             sl.session_state.panel = "home"
             sl.rerun()
 
@@ -162,7 +162,7 @@ elif sl.session_state.panel == "home":
 
     with bcol2:
         with sl.container(border=True):
-            sl.write(f"Total Progress: {completion_percentage}%")
+            sl.write(f"{language}Total Progress: {completion_percentage}%")
 
     with bcol3:
         with sl.container(border=True):
@@ -185,7 +185,7 @@ elif sl.session_state.panel == "flashcards":
     if current_idx < len(vocab_lines):
         raw_line = vocab_lines[current_idx]
 
-        # SPLIT AT THE FIRST SPACE ONLY
+        # splitting at the first space so translarion is after
         if " " in raw_line:
             parts = raw_line.split(" ", 1)
             left_word = parts[0].strip()  # Sourashtra word
@@ -194,13 +194,13 @@ elif sl.session_state.panel == "flashcards":
             left_word = raw_line
             right_translation = "translation coming"
 
-        # Initialize answer visibility state
+        # make sure answer visibility state
         if "show_answer" not in sl.session_state:
             sl.session_state.show_answer = False
 
         sl.write(f"Word #{current_idx + 1} of {len(vocab_lines)}:")
 
-        # FLASHCARD CONTAINER
+        # the flashcard container
         with sl.container(border=True):
             sl.subheader("Sourashtra:")
             sl.title(left_word)  # Displays the left word in large text
@@ -216,7 +216,7 @@ elif sl.session_state.panel == "flashcards":
 
         sl.write("")
 
-        # NEXT WORD BUTTON
+        # refresh the screen for tyhe new word
         if sl.button("Mark as Mastered & Next"):
             new_completed = int(user_data["words_completed"]) + 1
             new_left = int(user_data["words_left"]) - 1
@@ -228,7 +228,7 @@ elif sl.session_state.panel == "flashcards":
             # Reset reveal toggle for next card
             sl.session_state.show_answer = False
 
-            update_account_stats(
+            updateAccountFile(
                 user_data["username"],
                 user_data["password"],
                 user_data["language"],
@@ -240,7 +240,7 @@ elif sl.session_state.panel == "flashcards":
                 new_line,
             )
 
-            sl.session_state.current_user = read_account_file(
+            sl.session_state.current_user = readAccountFile(
                 user_data["username"]
             )
             sl.rerun()
@@ -263,12 +263,6 @@ elif sl.session_state.panel == "mcq":
         sl.rerun()
     sl.text(name)
 
-def createAccount(username, password, languageLearning ):
-    with open(username+".txt", "w", encoding="utf-8") as file_variable:
-        file_variable.write(username+"\n")
-        file_variable.write(password+"\n")
-        file_variable.write(languageLearning+"\n")
-        file_variable.write(username+"\n")
 
 
 
