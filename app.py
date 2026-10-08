@@ -9,15 +9,15 @@ import os
 def createAccountFile(username, password, language="Sourashtra"):
     file_path = f"{username}.txt"
     lines = [
-        username,  # Line 0 (1st row)
-        password,  # Line 1 (2nd row)
-        language,  # Line 2 (3rd row)
-        "0",  # Line 3 Stat 1
-        "0",  # Line 4 Stat 2
-        "0",  # Line 5 Stat 3
-        "0",  # Line 6 Total words completed
-        "10",  # Line 7 Words left in current set
-        "0",  # Line 8 Current line index in Sourashtra rtext file
+        username,  # Line 0
+        password,  # Line 1
+        language,  # Line 2
+        "0",  # Line 3 (Flashcard Line)
+        "0",  # Line 4 (MCQ Line)
+        "0",  # Line 5 (Stat 3)
+        "0",  # Line 6 (Total completed)
+        "10",  # Line 7 (Words left)
+        "0",  # Line 8 (Current line)
     ]
     with open(file_path, "w", encoding="utf-8") as file:
         file.write("\n".join(lines))
@@ -35,8 +35,8 @@ def readAccountFile(username):
         "username": lines[0],
         "password": lines[1],
         "language": lines[2],
-        "stat1": lines[3],
-        "stat2": lines[4],
+        "flashcard_line": lines[3],
+        "mcq_line": lines[4],
         "stat3": lines[5],
         "words_completed": lines[6],
         "words_left": lines[7],
@@ -48,8 +48,8 @@ def updateAccountFile(
     username,
     password,
     language,
-    stat1,
-    stat2,
+    flashcard_line,
+    mcq_line,
     stat3,
     words_completed,
     words_left,
@@ -60,8 +60,8 @@ def updateAccountFile(
         username,
         password,
         language,
-        str(stat1),
-        str(stat2),
+        str(flashcard_line),
+        str(mcq_line),
         str(stat3),
         str(words_completed),
         str(words_left),
@@ -123,61 +123,69 @@ elif sl.session_state.panel == "create":
             sl.session_state.panel = "home"
             sl.rerun()
 
-    if sl.button("Back to Home"):
-        sl.session_state.panel = "login/create"
-        sl.rerun()
-#logged in screen
-elif sl.session_state.panel == "home":
-    user_data = sl.session_state.current_user
-    sl.title(f"Hi, {user_data['username']}")
-    sl.write(f"Language: {user_data['language']}")
-    #layout
-    scol1, scol2, scol3 = sl.columns(3)
-    with scol1:
-        with sl.container(border=True):
-            sl.write("Stat 1 Place holder")
-    with scol2:
-        with sl.container(border=True):
-            sl.write("Stat 2 Place holder")
-    with scol3:
-        with sl.container(border=True):
-            sl.write("Stat 3 Place holder")
+    elif sl.session_state.panel == "home":
+        user_data = sl.session_state.current_user
 
-    with open("Sourashtra.txt", "r", encoding="utf-8") as f:
-        vocab_lines = [
-            line.strip() for line in f.readlines() if line.strip()
-        ]
+        with open("Sourashtra.txt", "r", encoding="utf-8") as f:
+            vocab_lines = [line.strip() for line in f.readlines() if line.strip()]
 
-    total_words = len(vocab_lines) if len(vocab_lines) > 0 else 1
-    completed = int(user_data["words_completed"])
-    completion_percentage = round((completed / total_words) * 100, 1)
+        total_words = len(vocab_lines) if len(vocab_lines) > 0 else 1
 
-    bcol1, bcol2, bcol3 = sl.columns([2, 1, 2])
-    with bcol1:
+        fc_completed = int(user_data["flashcard_line"])
+        mcq_completed = int(user_data["mcq_line"])
+
+        fc_pct = round((fc_completed / total_words) * 100, 1)
+        mcq_pct = round((mcq_completed / total_words) * 100, 1)
+
+        sl.title(f"Hi, {user_data['username']}")
+        sl.write(f"Language: {user_data['language']}")
+
+        scol1, scol2, scol3 = sl.columns(3)
+        with scol1:
+            with sl.container(border=True):
+                sl.metric(
+                    "Flashcards Progress",
+                    f"{fc_pct}%",
+                    f"{fc_completed}/{total_words} words",
+                )
+        with scol2:
+            with sl.container(border=True):
+                sl.metric(
+                    "MCQ Progress",
+                    f"{mcq_pct}%",
+                    f"{mcq_completed}/{total_words} words",
+                )
+        with scol3:
+            with sl.container(border=True):
+                total_completed = int(user_data["words_completed"])
+                sl.metric("Total Answers Completed", total_completed)
+
+        bcol1, bcol2, bcol3 = sl.columns([2, 1, 2])
+        with bcol1:
+            with sl.container(border=True):
+                sl.write("Practice Flashcards")
+                if sl.button("Start Flashcards"):
+                    sl.session_state.panel = "flashcards"
+                    sl.rerun()
+
+        with bcol2:
+            with sl.container(border=True):
+                sl.write(f"Active Language: {user_data['language']}")
+
+        with bcol3:
+            with sl.container(border=True):
+                sl.write("Practice MCQs")
+                if sl.button("Start MCQs"):
+                    sl.session_state.panel = "mcq"
+                    sl.rerun()
+
         with sl.container(border=True):
-            sl.write("Practice Flashcards")
-            if sl.button("Start Flashcards"):
-                sl.session_state.panel = "flashcards"
-                sl.rerun()
-
-    with bcol2:
-        with sl.container(border=True):
-            sl.write(f"{language}Total Progress: {completion_percentage}%")
-
-    with bcol3:
-        with sl.container(border=True):
-            sl.write("Practice MCQs")
-            if sl.button("Start MCQs"):
-                sl.session_state.panel = "mcq"
-                sl.rerun()
-
-    with sl.container(border=True):
-        sl.write(f"Words left in current set: {user_data['words_left']}")
+            sl.write(f"Words left in current set: {user_data['words_left']}")
 # PANEL 4 FLASHCARDS PRACTICE
 elif sl.session_state.panel == "flashcards":
     sl.title("Flashcards Practice")
     user_data = sl.session_state.current_user
-    current_idx = int(user_data["current_line"])
+    current_idx = int(user_data["flashcard_line"])
 
     with open("Sourashtra.txt", "r", encoding="utf-8") as f:
         vocab_lines = [line.strip() for line in f.readlines() if line.strip()]
@@ -185,27 +193,23 @@ elif sl.session_state.panel == "flashcards":
     if current_idx < len(vocab_lines):
         raw_line = vocab_lines[current_idx]
 
-        # splitting at the first space so translarion is after
         if " " in raw_line:
             parts = raw_line.split(" ", 1)
-            left_word = parts[0].strip()  # Sourashtra word
-            right_translation = parts[1].strip()  # English translation
+            left_word = parts[0].strip()
+            right_translation = parts[1].strip()
         else:
             left_word = raw_line
-            right_translation = "translation coming"
+            right_translation = "Translation missing"
 
-        # make sure answer visibility state
         if "show_answer" not in sl.session_state:
             sl.session_state.show_answer = False
 
-        sl.write(f"Word #{current_idx + 1} of {len(vocab_lines)}:")
+        sl.write(f"Flashcard #{current_idx + 1} of {len(vocab_lines)}:")
 
-        # the flashcard container
         with sl.container(border=True):
             sl.subheader("Sourashtra:")
-            sl.title(left_word)  # Displays the left word in large text
+            sl.title(left_word)
 
-            # Reveal button for translation
             if sl.button("Show Answer"):
                 sl.session_state.show_answer = True
 
@@ -216,28 +220,26 @@ elif sl.session_state.panel == "flashcards":
 
         sl.write("")
 
-        # refresh the screen for tyhe new word
         if sl.button("Mark as Mastered & Next"):
+            new_fc_line = current_idx + 1
             new_completed = int(user_data["words_completed"]) + 1
             new_left = int(user_data["words_left"]) - 1
-            new_line = current_idx + 1
 
             if new_left <= 0:
-                new_left = 10  # Reset set countdown when set hits 0
+                new_left = 10
 
-            # Reset reveal toggle for next card
             sl.session_state.show_answer = False
 
             updateAccountFile(
                 user_data["username"],
                 user_data["password"],
                 user_data["language"],
-                user_data["stat1"],
-                user_data["stat2"],
+                new_fc_line,
+                user_data["mcq_line"],
                 user_data["stat3"],
                 new_completed,
                 new_left,
-                new_line,
+                user_data["current_line"],
             )
 
             sl.session_state.current_user = readAccountFile(
@@ -246,22 +248,102 @@ elif sl.session_state.panel == "flashcards":
             sl.rerun()
 
     else:
-        sl.success("You have completed all available words!")
+        sl.success("You have completed all flashcards!")
 
     if sl.button("Back to Dashboard"):
         sl.session_state.show_answer = False
         sl.session_state.panel = "home"
         sl.rerun()
 
-    # --- PANEL 5: MCQ PRACTICE ---
-elif sl.session_state.panel == "mcq":
-    sl.title("Multiple Choice Questions")
-    sl.write("MCQ section coming soon!")
+    #panel 5: mcq practice
+    elif sl.session_state.panel == "mcq":
+        sl.title("Multiple Choice Quiz")
+        user_data = sl.session_state.current_user
+        current_idx = int(user_data["mcq_line"])
 
-    if sl.button("Back to Dashboard"):
-        sl.session_state.panel = "home"
-        sl.rerun()
-    sl.text(name)
+        with open("Sourashtra.txt", "r", encoding="utf-8") as f:
+            vocab_lines = [line.strip() for line in f.readlines() if line.strip()]
+
+        if current_idx < len(vocab_lines):
+            raw_line = vocab_lines[current_idx]
+
+            if " " in raw_line:
+                parts = raw_line.split(" ", 1)
+                target_word = parts[0].strip()
+                correct_translation = parts[1].strip()
+            else:
+                target_word = raw_line
+                correct_translation = "Translation missing"
+
+            sl.write(f"MCQ #{current_idx + 1} of {len(vocab_lines)}:")
+
+            with sl.container(border=True):
+                sl.subheader("What is the English translation for:")
+                sl.title(target_word)
+
+                if (
+                        "mcq_options" not in sl.session_state
+                        or sl.session_state.get("mcq_current_idx") != current_idx
+                ):
+                    all_translations = []
+                    for line in vocab_lines:
+                        if " " in line:
+                            trans = line.split(" ", 1)[1].strip()
+                            if (
+                                    trans != correct_translation
+                                    and trans not in all_translations
+                            ):
+                                all_translations.append(trans)
+
+                    distractors = random.sample(
+                        all_translations, min(3, len(all_translations))
+                    )
+                    options = distractors + [correct_translation]
+                    random.shuffle(options)
+
+                    sl.session_state.mcq_options = options
+                    sl.session_state.mcq_current_idx = current_idx
+
+                selected_option = sl.radio(
+                    "Select the correct answer:", sl.session_state.mcq_options
+                )
+
+                if sl.button("Submit Answer"):
+                    if selected_option == correct_translation:
+                        sl.success("Correct!")
+
+                        new_mcq_line = current_idx + 1
+                        new_completed = int(user_data["words_completed"]) + 1
+                        new_left = int(user_data["words_left"]) - 1
+
+                        if new_left <= 0:
+                            new_left = 10
+
+                        updateAccountFile(
+                            user_data["username"],
+                            user_data["password"],
+                            user_data["language"],
+                            user_data["flashcard_line"],
+                            new_mcq_line,
+                            user_data["stat3"],
+                            new_completed,
+                            new_left,
+                            user_data["current_line"],
+                        )
+
+                        sl.session_state.current_user = readAccountFile(
+                            user_data["username"]
+                        )
+                        sl.rerun()
+                    else:
+                        sl.error("Incorrect! Try again.")
+
+        else:
+            sl.success("You have completed all MCQ questions!")
+
+        if sl.button("Back to Dashboard"):
+            sl.session_state.panel = "home"
+            sl.rerun()
 
 
 
